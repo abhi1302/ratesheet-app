@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Ratesheet Upload</title>
+</head>
+<body>
+    <h1>Upload Ratesheet</h1>
+    <!-- Display flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+          {% for category, message in messages %}
+            <li style="color: {% if category == 'danger' %}red{% else %}green{% endif %};">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('upload_ratesheet') }}" method="post" enctype="multipart/form-data">
+        <input type="file" name="ratesheet" accept=".xls,.xlsx" required>
+        <button type="submit">Upload Ratesheet</button>
+    </form>
+</body>
+</html>
