@@ -228,10 +228,11 @@ def handle_exception(e):
     logger.exception("Unhandled Exception: %s", e)
     return render_template("error.html", error=str(e)), 500
 
-# Inject COLUMN_MAPPING into every template's context.
+
+# Inject Python's built-in getattr into templates.
 @app.context_processor
-def inject_mapping():
-    return dict(COLUMN_MAPPING=COLUMN_MAPPING)
+def inject_utilities():
+    return dict(getattr=getattr)
 
 if __name__ == '__main__':
     logger.info("Starting app_v2 on host 0.0.0.0, port 5000 with debug=True")
