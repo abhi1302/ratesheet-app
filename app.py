@@ -6,6 +6,8 @@ from datetime import datetime
 
 from flask import Flask, request, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
+
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG,
@@ -153,8 +155,9 @@ def index():
 
             # Truncate the ratesheet_v2 table for a fresh upload.
             logger.info("Truncating ratesheet_v2 table for fresh upload.")
-            db.session.execute("TRUNCATE TABLE ratesheet_v2 RESTART IDENTITY;")
+            db.session.execute(text("TRUNCATE TABLE ratesheet_v2 RESTART IDENTITY;"))
             db.session.commit()
+
 
             # Process every row (DataFrame already considers first row as headers)
             for idx, row in df.iterrows():
