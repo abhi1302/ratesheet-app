@@ -233,6 +233,11 @@ def handle_exception(e):
 @app.context_processor
 def inject_utilities():
     return dict(getattr=getattr)
+    
+@app.context_processor
+def inject_globals():
+    return dict(COLUMN_MAPPING=COLUMN_MAPPING, getattr=getattr)
+    
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
