@@ -8,11 +8,14 @@ from flask import Flask, request, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG,
-                    format="%(asctime)s [%(levelname)s] %(message)s",
-                    handlers=[logging.StreamHandler()])
+# Configure logging.
+# In development, logs are output to the console.
+# On Render, logs written to stdout/stderr will be visible in Render's dashboard logs.
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()]
+)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -26,7 +29,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# Define the model based on your DDL
+# Define the model based on your DDL.
 class RateSheetV2(db.Model):
     __tablename__ = 'ratesheet_v2'
     id = db.Column(db.Integer, primary_key=True)
@@ -98,7 +101,7 @@ def convert_value(value, target_field):
     Convert the value type based on the target DB column.
     For date fields, convert to a date; for numeric fields, attempt a float conversion.
     """
-    # For date fields
+    # For date fields.
     if target_field in ["start_date", "end_date"]:
         if pd.isnull(value):
             return None
@@ -158,8 +161,7 @@ def index():
             db.session.execute(text("TRUNCATE TABLE ratesheet_v2 RESTART IDENTITY;"))
             db.session.commit()
 
-
-            # Process every row (DataFrame already considers first row as headers)
+            # Process every row (first row is headers).
             for idx, row in df.iterrows():
                 row_data = process_excel_row(row)
                 new_row = RateSheetV2(**row_data)
@@ -182,11 +184,11 @@ def data_view():
             record_id = request.form.get("record_id")
             record = RateSheetV2.query.filter_by(id=record_id).first()
             if record:
-                # Loop through the known columns (ignore record_id).
+                # Loop through the known fields (ignoring record_id).
                 for field in COLUMN_MAPPING.values():
                     if field in request.form:
                         new_val = request.form.get(field)
-                        # For date fields, convert string back to date.
+                        # For date fields, convert string back to a date.
                         if field in ["start_date", "end_date"]:
                             try:
                                 new_val = pd.to_datetime(new_val).date()
@@ -219,6 +221,12 @@ def data_view():
     records = RateSheetV2.query.all()
     logger.debug(f"Fetched {len(records)} records from the database for display.")
     return render_template("data.html", records=records)
+
+# Global error handler to capture any unhandled exceptions.
+@app.errorhandler(Exception)
+def handle_exception(e):
+    logger.exception("Unhandled Exception: %s", e)
+    return render_template("error.html", error=str(e)), 500
 
 # Inject COLUMN_MAPPING into every template's context.
 @app.context_processor
