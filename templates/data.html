@@ -11,8 +11,14 @@
       <tr>
         <th>ID</th>
         {% for field in COLUMN_MAPPING.values() %}
-          <th>{{ field }}</th>
-        {% endfor %}
+		  <td>
+			{% if field == 'gprs_rate_per_kb_rate_value' %}
+			  <input type="text" name="{{ field }}" value="{{ getattr(record, field)|float_format(6) }}">
+			{% else %}
+			  <input type="text" name="{{ field }}" value="{{ getattr(record, field) }}">
+			{% endif %}
+		  </td>
+		{% endfor %}
         <th>Actions</th>
       </tr>
     </thead>

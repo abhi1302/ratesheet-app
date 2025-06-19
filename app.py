@@ -237,6 +237,14 @@ def inject_utilities():
 @app.context_processor
 def inject_globals():
     return dict(COLUMN_MAPPING=COLUMN_MAPPING, getattr=getattr)
+
+@app.template_filter('float_format')
+def float_format(value, precision=6):
+    try:
+        return f"{value:.{precision}f}"
+    except Exception as e:
+        logger.error("Error formatting float: %s", e)
+        return value
     
 
 if __name__ == '__main__':
