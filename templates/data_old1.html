@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Data View - ratesheet_v2</title>
+  <title>Data View</title>
 </head>
 <body>
-  <h1>Data Loaded from Excel (ratesheet_v2)</h1>
+  <h1>Data Loaded from Excel</h1>
   <table border="1">
     <thead>
       <tr>
         <th>ID</th>
-        {% for field in COLUMN_MAPPING.values() %}
-          <th>{{ field }}</th>
-        {% endfor %}
+        {% if records and records[0] %}
+          {% for key in records[0].data.keys() %}
+            <th>{{ key }}</th>
+          {% endfor %}
+        {% endif %}
         <th>Actions</th>
       </tr>
     </thead>
@@ -22,9 +24,9 @@
         <td>{{ record.id }}</td>
         <form method="POST">
           <input type="hidden" name="record_id" value="{{ record.id }}">
-          {% for field in COLUMN_MAPPING.values() %}
+          {% for key, value in record.data.items() %}
           <td>
-            <input type="text" name="{{ field }}" value="{{ getattr(record, field) }}">
+            <input type="text" name="{{ key }}" value="{{ value }}">
           </td>
           {% endfor %}
           <td>
