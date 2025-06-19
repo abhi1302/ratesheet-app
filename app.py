@@ -28,6 +28,18 @@ class RateSheet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     data = db.Column(db.JSON)
 
+
+@app.route('/initdb')
+def initdb():
+    try:
+        db.create_all()
+        logger.info("Database tables created successfully via /initdb route.")
+        return "Database tables created!"
+    except Exception as e:
+        logger.exception("Error creating database tables via /initdb route.")
+        return f"Error creating database tables: {e}", 500
+
+
 @app.before_first_request
 def create_tables():
     logger.info("Creating database tables if not already created.")
