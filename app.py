@@ -2,6 +2,8 @@ import os
 import logging
 import pandas as pd
 import numpy as np
+from datetime import datetime
+
 from flask import Flask, request, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 
@@ -12,9 +14,9 @@ logging.basicConfig(level=logging.DEBUG,
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "your-secret-key"  # Replace with your strong secret key
+app.config["SECRET_KEY"] = "your-secret-key"  # Replace with a strong secret key
 
-# Use the DATABASE_URL environment variable if available, otherwise update the connection string below.
+# Use DATABASE_URL if provided, otherwise update the connection string accordingly.
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
     "DATABASE_URL", "postgresql://USER:PASSWORD@HOST:PORT/DBNAME"
 )
@@ -22,65 +24,146 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# Define the model to store each Excel row as a JSON object.
-class RateSheet(db.Model):
-    __tablename__ = 'ratesheet'
+# Define the model based on your DDL
+class RateSheetV2(db.Model):
+    __tablename__ = 'ratesheet_v2'
     id = db.Column(db.Integer, primary_key=True)
-    data = db.Column(db.JSON)
+    bu_plmn_code = db.Column(db.String(50))
+    tax_applicable_tax_value = db.Column(db.String(50))
+    tadig_plmn_code = db.Column(db.String(50))
+    tax_included_in_the_rate_yes_no = db.Column(db.String(10))
+    start_date = db.Column(db.Date)
+    bearer_service_included_in_special_iot_yes_no = db.Column(db.String(10))
+    end_date = db.Column(db.Date)
+    currency = db.Column(db.String(10))
+    moc_call_local_call_rate_value = db.Column(db.Float)
+    moc_call_local_call_charging_interval = db.Column(db.String(50))
+    moc_call_call_back_home_rate_value = db.Column(db.Float)
+    moc_call_call_back_home_charging_interval = db.Column(db.String(50))
+    moc_call_rest_of_the_world_rate_value = db.Column(db.Float)
+    moc_call_rest_of_the_world_charging_interval = db.Column(db.String(50))
+    moc_call_premium_numbers_rate_value = db.Column(db.Float)
+    moc_call_premium_numbers_charging_interval = db.Column(db.String(50))
+    moc_call_special_numbers_rate_value = db.Column(db.Float)
+    moc_call_special_numbers_charging_interval = db.Column(db.String(50))
+    moc_call_satellite_rate_value = db.Column(db.Float)
+    moc_call_satellite_charging_interval = db.Column(db.String(50))
+    mtc_call_rate_value = db.Column(db.Float)
+    mtc_call_charging_interval = db.Column(db.String(50))
+    mo_sms_rate_value = db.Column(db.Float)
+    gprs_rate_mb_rate_value = db.Column(db.Float)
+    gprs_rate_per_kb_rate_value = db.Column(db.Float)
+    gprs_rate_mb_charging_interval = db.Column(db.String(50))
+    volte_rate_mb_rate_value = db.Column(db.Float)
+    volte_rate_mb_charging_interval = db.Column(db.String(50))
+    tax_applicable_yes_no = db.Column(db.String(10))
 
+# Mapping dictionary between Excel headers and DB model field names.
+COLUMN_MAPPING = {
+    "BU PLMN Code": "bu_plmn_code",
+    "Tax applicable Tax Value": "tax_applicable_tax_value",
+    "TADIG PLMN Code": "tadig_plmn_code",
+    "Tax included in the rate Yes/No": "tax_included_in_the_rate_yes_no",
+    "Start date": "start_date",
+    "Bearer Service included in Special IOT Yes/No": "bearer_service_included_in_special_iot_yes_no",
+    "End date": "end_date",
+    "Currency": "currency",
+    "MOC Call Local Call Rate/Value": "moc_call_local_call_rate_value",
+    "MOC Call Local Call Charging interval": "moc_call_local_call_charging_interval",
+    "MOC Call Call Back Home Rate/Value": "moc_call_call_back_home_rate_value",
+    "MOC Call Call Back Home Charging interval": "moc_call_call_back_home_charging_interval",
+    "MOC Call Rest of the world Rate/Value": "moc_call_rest_of_the_world_rate_value",
+    "MOC Call Rest of the world Charging interval": "moc_call_rest_of_the_world_charging_interval",
+    "MOC Call Premium numbers Rate/Value": "moc_call_premium_numbers_rate_value",
+    "MOC Call Premium numbers Charging interval": "moc_call_premium_numbers_charging_interval",
+    "MOC Call Special numbers Rate/Value": "moc_call_special_numbers_rate_value",
+    "MOC Call Special numbers Charging interval": "moc_call_special_numbers_charging_interval",
+    "MOC Call Satellite Rate/Value": "moc_call_satellite_rate_value",
+    "MOC Call Satellite Charging interval": "moc_call_satellite_charging_interval",
+    "MTC Call Rate/Value": "mtc_call_rate_value",
+    "MTC Call Charging interval": "mtc_call_charging_interval",
+    "MO-SMS Rate/Value": "mo_sms_rate_value",
+    "GPRS Rate MB Rate/Value": "gprs_rate_mb_rate_value",
+    "GPRS Rate per KB Rate/Value": "gprs_rate_per_kb_rate_value",
+    "GPRS Rate MB Charging interval": "gprs_rate_mb_charging_interval",
+    "VoLTE Rate MB Rate/Value": "volte_rate_mb_rate_value",
+    "VoLTE Rate MB Charging interval": "volte_rate_mb_charging_interval",
+    "Tax applicable Yes/No": "tax_applicable_yes_no"
+}
 
-@app.route('/initdb')
-def initdb():
-    try:
-        db.create_all()
-        logger.info("Database tables created successfully via /initdb route.")
-        return "Database tables created!"
-    except Exception as e:
-        logger.exception("Error creating database tables via /initdb route.")
-        return f"Error creating database tables: {e}", 500
-
-
-@app.before_first_request
-def create_tables():
-    logger.info("Creating database tables if not already created.")
-    db.create_all()
-
-def make_json_serializable(row_dict):
-    """Converts Pandas Timestamps to isoformat strings and NaNs to None."""
-    serializable_dict = {}
-    for key, value in row_dict.items():
+def convert_value(value, target_field):
+    """
+    Convert the value type based on the target DB column.
+    For date fields, convert to a date; for numeric fields, attempt a float conversion.
+    """
+    # For date fields
+    if target_field in ["start_date", "end_date"]:
+        if pd.isnull(value):
+            return None
         if isinstance(value, pd.Timestamp):
-            logger.debug(f"Converting Timestamp for key '{key}': {value}")
-            serializable_dict[key] = value.isoformat()
-        elif isinstance(value, float) and np.isnan(value):
-            logger.debug(f"Converting NaN for key '{key}' to None")
-            serializable_dict[key] = None
-        else:
-            serializable_dict[key] = value
-    return serializable_dict
+            return value.date()
+        try:
+            return pd.to_datetime(value).date()
+        except Exception as e:
+            logger.error(f"Error converting date for field {target_field}: {value} -- {e}")
+            return None
+
+    # For numeric (float) fields.
+    numeric_fields = [
+        "moc_call_local_call_rate_value", "moc_call_call_back_home_rate_value",
+        "moc_call_rest_of_the_world_rate_value", "moc_call_premium_numbers_rate_value",
+        "moc_call_special_numbers_rate_value", "moc_call_satellite_rate_value",
+        "mtc_call_rate_value", "mo_sms_rate_value", "gprs_rate_mb_rate_value",
+        "gprs_rate_per_kb_rate_value", "volte_rate_mb_rate_value"
+    ]
+    if target_field in numeric_fields:
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return None
+
+    return value
+
+def process_excel_row(row):
+    """
+    Given a Pandas series (row) read from the Excel file,
+    map it to a dictionary with keys matching the RateSheetV2 model.
+    """
+    processed = {}
+    for excel_header, model_field in COLUMN_MAPPING.items():
+        value = row.get(excel_header, None)
+        # Convert numpy NaN to None if applicable.
+        if isinstance(value, float) and np.isnan(value):
+            value = None
+        processed[model_field] = convert_value(value, model_field)
+    return processed
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         file = request.files.get("file")
         if not file:
-            logger.error("File upload attempted with no file provided.")
+            logger.error("No file provided during upload request.")
             flash("No file provided", "error")
             return redirect(request.url)
         try:
-            # Read the Excel file into a pandas DataFrame.
-            logger.info("Reading Excel file uploaded.")
+            logger.info("Reading uploaded Excel file...")
             df = pd.read_excel(file)
-            logger.debug(f"Excel file read successfully with shape {df.shape}")
-            # Insert each row into the database after making it JSON serializable.
-            for index, row in df.iterrows():
-                row_dict = row.to_dict()
-                row_serializable = make_json_serializable(row_dict)
-                new_row = RateSheet(data=row_serializable)
-                db.session.add(new_row)
-                logger.debug(f"Added row {index} to session.")
+            logger.debug(f"Excel file read with columns: {list(df.columns)} and shape: {df.shape}")
+
+            # Truncate the ratesheet_v2 table for a fresh upload.
+            logger.info("Truncating ratesheet_v2 table for fresh upload.")
+            db.session.execute("TRUNCATE TABLE ratesheet_v2 RESTART IDENTITY;")
             db.session.commit()
-            logger.info("All rows committed to the database successfully.")
+
+            # Process every row (DataFrame already considers first row as headers)
+            for idx, row in df.iterrows():
+                row_data = process_excel_row(row)
+                new_row = RateSheetV2(**row_data)
+                db.session.add(new_row)
+                logger.debug(f"Prepared row {idx} for insertion: {row_data}")
+            db.session.commit()
+            logger.info("All rows inserted successfully into ratesheet_v2.")
             flash("Excel file successfully loaded into DB", "success")
             return redirect(url_for("data_view"))
         except Exception as e:
@@ -94,28 +177,51 @@ def data_view():
     if request.method == "POST":
         try:
             record_id = request.form.get("record_id")
-            record = RateSheet.query.filter_by(id=record_id).first()
+            record = RateSheetV2.query.filter_by(id=record_id).first()
             if record:
-                updated_data = {}
-                for key, value in request.form.items():
-                    if key != "record_id":
-                        updated_data[key] = value
-                record.data = updated_data
+                # Loop through the known columns (ignore record_id).
+                for field in COLUMN_MAPPING.values():
+                    if field in request.form:
+                        new_val = request.form.get(field)
+                        # For date fields, convert string back to date.
+                        if field in ["start_date", "end_date"]:
+                            try:
+                                new_val = pd.to_datetime(new_val).date()
+                            except Exception:
+                                new_val = None
+                        # For numeric fields, try to convert.
+                        elif field in [
+                            "moc_call_local_call_rate_value", "moc_call_call_back_home_rate_value",
+                            "moc_call_rest_of_the_world_rate_value", "moc_call_premium_numbers_rate_value",
+                            "moc_call_special_numbers_rate_value", "moc_call_satellite_rate_value",
+                            "mtc_call_rate_value", "mo_sms_rate_value", "gprs_rate_mb_rate_value",
+                            "gprs_rate_per_kb_rate_value", "volte_rate_mb_rate_value"
+                        ]:
+                            try:
+                                new_val = float(new_val)
+                            except Exception:
+                                new_val = None
+                        setattr(record, field, new_val)
                 db.session.commit()
                 logger.info(f"Record {record_id} updated successfully.")
                 flash("Record updated", "success")
             else:
-                logger.error(f"Record {record_id} not found for update.")
+                logger.error(f"Record not found for id {record_id}.")
                 flash("Record not found", "error")
         except Exception as e:
             logger.exception("Error updating record.")
             flash(f"Error updating record: {str(e)}", "error")
         return redirect(url_for("data_view"))
     
-    records = RateSheet.query.all()
-    logger.debug(f"Fetched {len(records)} records from the database.")
+    records = RateSheetV2.query.all()
+    logger.debug(f"Fetched {len(records)} records from the database for display.")
     return render_template("data.html", records=records)
 
+# Inject COLUMN_MAPPING into every template's context.
+@app.context_processor
+def inject_mapping():
+    return dict(COLUMN_MAPPING=COLUMN_MAPPING)
+
 if __name__ == '__main__':
-    logger.info("Starting Flask application on host 0.0.0.0, port 5000 with debug=True")
+    logger.info("Starting app_v2 on host 0.0.0.0, port 5000 with debug=True")
     app.run(host='0.0.0.0', port=5000, debug=True)
