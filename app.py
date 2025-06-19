@@ -34,11 +34,8 @@ class RateSheetV2(db.Model):
     __tablename__ = 'ratesheet_v2'
     id = db.Column(db.Integer, primary_key=True)
     bu_plmn_code = db.Column(db.String(50))
-    tax_applicable_tax_value = db.Column(db.String(50))
     tadig_plmn_code = db.Column(db.String(50))
-    tax_included_in_the_rate_yes_no = db.Column(db.String(10))
     start_date = db.Column(db.Date)
-    bearer_service_included_in_special_iot_yes_no = db.Column(db.String(10))
     end_date = db.Column(db.Date)
     currency = db.Column(db.String(10))
     moc_call_local_call_rate_value = db.Column(db.Float)
@@ -62,15 +59,15 @@ class RateSheetV2(db.Model):
     volte_rate_mb_rate_value = db.Column(db.Float)
     volte_rate_mb_charging_interval = db.Column(db.String(50))
     tax_applicable_yes_no = db.Column(db.String(10))
+    tax_applicable_tax_value = db.Column(db.String(50))
+    tax_included_in_the_rate_yes_no = db.Column(db.String(10))
+    bearer_service_included_in_special_iot_yes_no = db.Column(db.String(10))
 
 # Mapping dictionary between Excel headers and DB model field names.
 COLUMN_MAPPING = {
     "BU PLMN Code": "bu_plmn_code",
-    "Tax applicable Tax Value": "tax_applicable_tax_value",
     "TADIG PLMN Code": "tadig_plmn_code",
-    "Tax included in the rate Yes/No": "tax_included_in_the_rate_yes_no",
     "Start date": "start_date",
-    "Bearer Service included in Special IOT Yes/No": "bearer_service_included_in_special_iot_yes_no",
     "End date": "end_date",
     "Currency": "currency",
     "MOC Call Local Call Rate/Value": "moc_call_local_call_rate_value",
@@ -93,7 +90,10 @@ COLUMN_MAPPING = {
     "GPRS Rate MB Charging interval": "gprs_rate_mb_charging_interval",
     "VoLTE Rate MB Rate/Value": "volte_rate_mb_rate_value",
     "VoLTE Rate MB Charging interval": "volte_rate_mb_charging_interval",
-    "Tax applicable Yes/No": "tax_applicable_yes_no"
+    "Tax applicable Yes/No": "tax_applicable_yes_no",
+    "Tax applicable Tax Value": "tax_applicable_tax_value",
+    "Tax included in the rate Yes/No": "tax_included_in_the_rate_yes_no",
+    "Bearer Service included in Special IOT Yes/No": "bearer_service_included_in_special_iot_yes_no"
 }
 
 def convert_value(value, target_field):
