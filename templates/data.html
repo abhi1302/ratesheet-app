@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Data View</title>
+</head>
+<body>
+  <h1>Data Loaded from Excel</h1>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>ID</th>
+        {% if records and records[0] %}
+          {% for key in records[0].data.keys() %}
+            <th>{{ key }}</th>
+          {% endfor %}
+        {% endif %}
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in records %}
+      <tr>
+        <td>{{ record.id }}</td>
+        <form method="POST">
+          <input type="hidden" name="record_id" value="{{ record.id }}">
+          {% for key, value in record.data.items() %}
+          <td>
+            <input type="text" name="{{ key }}" value="{{ value }}">
+          </td>
+          {% endfor %}
+          <td>
+            <button type="submit">Save</button>
+          </td>
+        </form>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+      {% for category, message in messages %}
+        <li style="color: {{ 'red' if category=='error' else 'green' }}">{{ message }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+</body>
+</html>

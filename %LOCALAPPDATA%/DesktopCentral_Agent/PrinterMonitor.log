@@ -65,3 +65,10 @@ MaxPrintPages = 4294967295
 GdiPlusToken = 43106218
 ExcludedEscapes = 4117, 37, 4118, 4115, 4121, "
 12-06-2025	19:49:11.483	 INFO	 43576	 28708	LateInitialization	"Intialization finished"
+19-06-2025	10:44:47.487	 INFO	 65608	 62652	DllMain	"DLL_PROCESS_ATTACH Sun Apr 27 14:47:17 2025 11.4.2500.28"
+19-06-2025	10:44:47.492	 INFO	 65608	 62652	DllMain	"PROCESS ATTACHED"
+19-06-2025	10:44:47.494	 INFO	 65608	 58384	LateInitialization	"Intialization..."
+19-06-2025	10:44:47.495	 INFO	 65608	 58384	LoadDisplayDevicesName	"DisplayDevices : "
+19-06-2025	10:44:47.497	 INFO	 65608	 58384	LoadDisplayDevicesName	"\\.\DISPLAY1"
+19-06-2025	10:44:47.498	 INFO	 65608	 58384	LoadDisplayDevicesName	"\\.\DISPLAY2"
+19-06-2025	10:44:47.499	 INFO	 65608	 58384	LoadDisplayDevicesName	"\\.\DISPLAY3"
