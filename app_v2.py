@@ -94,13 +94,12 @@ COLUMN_MAPPING = {
 def convert_value(value, target_field):
     """
     Convert the value type based on the target DB column.
-    Convert dates for date fields; numeric conversion for float fields.
+    For date fields, convert to a date; for numeric fields, attempt a float conversion.
     """
-    # For date fields, if value is not NaT/NaN, try converting to a date object.
+    # For date fields
     if target_field in ["start_date", "end_date"]:
         if pd.isnull(value):
             return None
-        # If it's already a Timestamp, convert to date.
         if isinstance(value, pd.Timestamp):
             return value.date()
         try:
@@ -109,21 +108,20 @@ def convert_value(value, target_field):
             logger.error(f"Error converting date for field {target_field}: {value} -- {e}")
             return None
 
-    # For numeric (float) fields:
+    # For numeric (float) fields.
     numeric_fields = [
         "moc_call_local_call_rate_value", "moc_call_call_back_home_rate_value",
         "moc_call_rest_of_the_world_rate_value", "moc_call_premium_numbers_rate_value",
-        "moc_call_special_numbers_rate_value", "moc_call_satellite_rate_value", 
+        "moc_call_special_numbers_rate_value", "moc_call_satellite_rate_value",
         "mtc_call_rate_value", "mo_sms_rate_value", "gprs_rate_mb_rate_value",
         "gprs_rate_per_kb_rate_value", "volte_rate_mb_rate_value"
     ]
     if target_field in numeric_fields:
         try:
-            val = float(value)
-            return val
+            return float(value)
         except (ValueError, TypeError):
             return None
-    # Return as is for other fields.
+
     return value
 
 def process_excel_row(row):
@@ -153,17 +151,17 @@ def index():
             df = pd.read_excel(file)
             logger.debug(f"Excel file read with columns: {list(df.columns)} and shape: {df.shape}")
 
-            # Before inserting new data, truncate the table.
+            # Truncate the ratesheet_v2 table for a fresh upload.
             logger.info("Truncating ratesheet_v2 table for fresh upload.")
             db.session.execute("TRUNCATE TABLE ratesheet_v2 RESTART IDENTITY;")
             db.session.commit()
 
-            # Starting from row 2 (DataFrame already considers first row as headers)
-            for index, row in df.iterrows():
+            # Process every row (DataFrame already considers first row as headers)
+            for idx, row in df.iterrows():
                 row_data = process_excel_row(row)
                 new_row = RateSheetV2(**row_data)
                 db.session.add(new_row)
-                logger.debug(f"Prepared row {index} for insertion: {row_data}")
+                logger.debug(f"Prepared row {idx} for insertion: {row_data}")
             db.session.commit()
             logger.info("All rows inserted successfully into ratesheet_v2.")
             flash("Excel file successfully loaded into DB", "success")
@@ -181,7 +179,7 @@ def data_view():
             record_id = request.form.get("record_id")
             record = RateSheetV2.query.filter_by(id=record_id).first()
             if record:
-                # Loop through the known columns (ignoring record_id).
+                # Loop through the known columns (ignore record_id).
                 for field in COLUMN_MAPPING.values():
                     if field in request.form:
                         new_val = request.form.get(field)
@@ -218,14 +216,12 @@ def data_view():
     records = RateSheetV2.query.all()
     logger.debug(f"Fetched {len(records)} records from the database for display.")
     return render_template("data.html", records=records)
-    
-    
+
+# Inject COLUMN_MAPPING into every template's context.
 @app.context_processor
 def inject_mapping():
-    return dict(COLUMN_MAPPING=COLUMN_MAPPING)    
+    return dict(COLUMN_MAPPING=COLUMN_MAPPING)
 
 if __name__ == '__main__':
     logger.info("Starting app_v2 on host 0.0.0.0, port 5000 with debug=True")
     app.run(host='0.0.0.0', port=5000, debug=True)
-
-
