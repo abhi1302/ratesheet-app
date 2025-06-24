@@ -46,6 +46,11 @@ from app_upload_country import country_bp
 app.register_blueprint(country_bp)
 
 
+from app_download_ratecards import ratecard_bp
+app.register_blueprint(ratecard_bp)
+
+
+
 # Define the model based on your DDL.
 class RateSheetV2(db.Model):
     __tablename__ = 'ratesheet_v2'
