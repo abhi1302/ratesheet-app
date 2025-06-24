@@ -10,7 +10,27 @@ country_bp = Blueprint(
     template_folder='templates'
 )
 
-@country_bp.route('/upload-country', methods=['GET', 'POST'])
+# in app_upload_country.py, near the top:
+def clean_cell(val, max_len=None, upper=False):
+    """
+    - nan → None
+    - floats with .0 → int
+    - everything → str()
+    - optionally truncate to max_len, uppercase
+    """
+    if pd.isna(val):
+        return None
+    # convert floats like 2.0 → int(2)
+    if isinstance(val, float) and val.is_integer():
+        val = int(val)
+    s = str(val).strip()
+    if upper:
+        s = s.upper()
+    if max_len is not None and len(s) > max_len:
+        s = s[:max_len]
+    return s
+
+@country_bp.route('/upload-country', methods=['GET','POST'])
 def upload_country():
     logger = current_app.logger
 
@@ -22,31 +42,31 @@ def upload_country():
             return redirect(request.url)
 
         try:
-            logger.info("Reading country Excel file...")
             df = pd.read_excel(file)
-            logger.debug(f"Country sheet shape: {df.shape}")
+            logger.info(f"Country sheet shape: {df.shape}")
 
-            # Truncate table
+            # Truncate
             db.session.execute(text("TRUNCATE TABLE country_v2 RESTART IDENTITY;"))
             db.session.commit()
-            logger.debug("Truncated country_v2 table")
+            logger.debug("country_v2 truncated")
 
-            # Insert rows
             for i, row in df.iterrows():
                 params = {
-                    "name":                    row.get("name"),
-                    "alpha_2":                 row.get("alpha-2"),
-                    "alpha_3":                 row.get("alpha-3"),
-                    "country_code":            row.get("country-code"),
-                    "iso_3166_2":              row.get("iso_3166-2"),
-                    "region":                  row.get("region"),
-                    "sub_region":              row.get("sub-region"),
-                    "intermediate_region":     row.get("intermediate-region"),
-                    "region_code":             row.get("region-code"),
-                    "sub_region_code":         row.get("sub-region-code"),
-                    "intermediate_region_code":row.get("intermediate-region-code"),
-                    "custom_name":             row.get("custom-name")
+                    # max_len=100 for name, custom_name
+                    "name":                    clean_cell(row["name"], max_len=100),
+                    "alpha_2":                 clean_cell(row["alpha-2"], max_len=2, upper=True),
+                    "alpha_3":                 clean_cell(row["alpha-3"], max_len=3, upper=True),
+                    "country_code":            clean_cell(row["country-code"], max_len=10),
+                    "iso_3166_2":              clean_cell(row["iso_3166-2"], max_len=20),
+                    "region":                  clean_cell(row["region"], max_len=50),
+                    "sub_region":              clean_cell(row["sub-region"], max_len=50),
+                    "intermediate_region":     clean_cell(row["intermediate-region"], max_len=50),
+                    "region_code":             clean_cell(row["region-code"], max_len=10),
+                    "sub_region_code":         clean_cell(row["sub-region-code"], max_len=10),
+                    "intermediate_region_code":clean_cell(row["intermediate-region-code"], max_len=10),
+                    "custom_name":             clean_cell(row["custom-name"], max_len=100),
                 }
+
                 db.session.execute(text("""
                     INSERT INTO country_v2 (
                       name, alpha_2, alpha_3, country_code, iso_3166_2,
@@ -60,6 +80,7 @@ def upload_country():
                       :custom_name
                     )
                 """), params)
+
                 logger.debug(f"Inserted row {i}: {params['name']}")
 
             db.session.commit()
@@ -73,5 +94,4 @@ def upload_country():
             flash(f"Error processing file: {e}", "error")
             return redirect(request.url)
 
-    # GET
     return render_template('upload_country.html')
