@@ -29,6 +29,11 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+
+# after app is created:
+from app_upload_template import bp as template_bp
+app.register_blueprint(template_bp)
+
 # Define the model based on your DDL.
 class RateSheetV2(db.Model):
     __tablename__ = 'ratesheet_v2'
