@@ -31,8 +31,16 @@ db = SQLAlchemy(app)
 
 
 # after app is created:
-from app_upload_template import bp as template_bp
-app.register_blueprint(template_bp)
+#from app_upload_template import bp as template_bp
+#app.register_blueprint(template_bp)
+
+# in app_upload_template.py, in your POST handler
+#return redirect(url_for('upload_template.upload_template'))
+
+
+from app_upload_template import bp as upload_bp
+# register with a URL prefix and a different name
+app.register_blueprint(upload_bp, url_prefix='', name='template')
 
 # Define the model based on your DDL.
 class RateSheetV2(db.Model):
