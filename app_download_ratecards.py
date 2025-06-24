@@ -14,6 +14,32 @@ SELECT
     'CELC_IR_VOICE_TARIFF_' || a.tadig_plmn_code || '_20250701' AS tariff_name,
     '2025-07-01' AS "date",
     CASE 
+        WHEN a.moc_call_local_call_charging_interval = '1 second' THEN '1/1'
+        WHEN a.moc_call_local_call_charging_interval = '60 seconds' THEN '60/60'
+        ELSE a.moc_call_local_call_charging_interval
+    END AS rounding_rules,
+    t.destination_type,
+    t.setup_rate,
+    t.calls_type,
+    CASE 
+        WHEN t.remarks = 'NaN' THEN NULL
+        ELSE t.remarks
+    END AS remarks
+FROM ratesheet_v2 a
+CROSS JOIN "template" t
+JOIN country_v2 b
+  ON LEFT(a.tadig_plmn_code, 3) = b.alpha_3
+WHERE t.destination = 'National'
+
+UNION ALL
+
+SELECT 
+    t.destination,
+    t.area_code,
+    a.moc_call_call_back_home_rate_value AS rate,
+    'CELC_IR_VOICE_TARIFF_' || a.tadig_plmn_code || '_20250701' AS tariff_name,
+    '2025-07-01' AS "date",
+    CASE 
         WHEN a.moc_call_call_back_home_charging_interval = '1 second' THEN '1/1'
         WHEN a.moc_call_call_back_home_charging_interval = '60 seconds' THEN '60/60'
         ELSE a.moc_call_call_back_home_charging_interval
@@ -29,7 +55,8 @@ FROM ratesheet_v2 a
 CROSS JOIN "template" t
 JOIN country_v2 b
   ON LEFT(a.tadig_plmn_code, 3) = b.alpha_3
-WHERE t.destination = 'National'
+WHERE t.destination = b.custom_name
+
 ORDER BY tariff_name;
 """
 
