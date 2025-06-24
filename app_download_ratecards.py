@@ -2,15 +2,11 @@ import io
 import pandas as pd
 from flask import Blueprint, render_template, current_app, url_for, redirect, flash, send_file
 from sqlalchemy import text
-from app import db  # your SQLAlchemy instance
+from app import db
 
-ratecard_bp = Blueprint(
-    'ratecard',             # blueprint name
-    __name__,
-    template_folder='templates'
-)
+ratecard_bp = Blueprint('ratecard', __name__, template_folder='templates')
 
-SQL = """
+SQL = """ 
 SELECT 
     t.destination,
     t.area_code,
@@ -39,25 +35,26 @@ ORDER BY tariff_name;
 
 @ratecard_bp.route('/download-ratecard', methods=['GET'])
 def download_ratecard_page():
-    """Render a simple page with a Download button."""
     return render_template('download_ratecard.html')
-
 
 @ratecard_bp.route('/download-ratecard/file', methods=['GET'])
 def download_ratecard_file():
     logger = current_app.logger
     try:
         logger.info("Running ratecard SQL…")
-        # <-- use db.engine instead of db.session.bind -->
-        df = pd.read_sql_query(SQL, con=db.engine)
+        # execute via session, not engine
+        result = db.session.execute(text(SQL))
+        rows = result.fetchall()
+        cols = result.keys()
+        df = pd.DataFrame(rows, columns=cols)
         logger.debug(f"Fetched {len(df)} rows for ratecard")
 
-        # Build Excel in memory
+        # Write Excel to memory
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, index=False, sheet_name='Ratecard')
         output.seek(0)
-        logger.info("Excel workbook generated, sending to client")
+        logger.info("Excel generated, sending to client")
 
         return send_file(
             output,
@@ -65,6 +62,7 @@ def download_ratecard_file():
             download_name='ratecard_national.xlsx',
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
+
     except Exception as e:
         logger.exception("Failed to generate ratecard Excel")
         flash(f"Error generating ratecard: {e}", "error")
