@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Country File</title>
+</head>
+<body>
+  <h1>Upload Country Excel</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".xls,.xlsx" required>
+    <button type="submit">Upload</button>
+  </form>
+
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+    <ul>
+      {% for cat, msg in msgs %}
+      <li style="color: {{ 'red' if cat=='error' else 'green' }}">{{ msg }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  {% endwith %}
+</body>
+</html>

@@ -42,6 +42,8 @@ from app_upload_template import bp as upload_bp
 # register with a URL prefix and a different name
 app.register_blueprint(upload_bp, url_prefix='', name='template')
 
+from app_upload_country import country_bp
+app.register_blueprint(country_bp)
 
 
 # Define the model based on your DDL.
