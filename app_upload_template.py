@@ -66,8 +66,13 @@ def upload_template():
                 logger.debug(f"Inserted template row {i}")
             db.session.commit()
             flash("Template uploaded successfully", "success")
-            logger.info("All template rows committed")
-            return redirect(url_for('upload_template'))
+            #logger.info("All template rows committed")
+            #return redirect(url_for('upload_template'))
+            # … inside upload_template(), after successful commit …
+            logger.info("Template uploaded successfully, redirecting back")
+            # redirect to the same view via its full endpoint
+            return redirect(url_for('template.upload_template'))
+
 
         except Exception as e:
             db.session.rollback()
