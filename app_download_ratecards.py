@@ -88,12 +88,44 @@ FROM (
     JOIN country_v2 b ON LEFT(a.tadig_plmn_code, 3) = b.alpha_3
     WHERE t.destination <> b.custom_name
       AND t.calls_type = 'ROW'
+
+    UNION ALL
+
+    -- 4. MTC CALLS
+    SELECT 
+        t.destination,
+        t.area_code,
+        a.mtc_call_rate_value AS rate,
+        'CELC_IR_VOICE_TARIFF_' || a.tadig_plmn_code || '_20250701' AS tariff_name,
+        '2025-07-01' AS date,
+        CASE 
+            WHEN a.mtc_call_charging_interval = '1 second' THEN '1/1'
+            WHEN a.mtc_call_charging_interval = '60 seconds' THEN '60/60'
+            ELSE a.mtc_call_charging_interval
+        END AS rounding_rules,
+        t.destination_type,
+        t.setup_rate,
+        t.calls_type,
+        CASE 
+            WHEN t.remarks = 'NaN' THEN NULL
+            ELSE t.remarks
+        END AS remarks,
+        4 AS source_order
+    FROM ratesheet_v2 a
+    CROSS JOIN "template" t
+    JOIN country_v2 b ON LEFT(a.tadig_plmn_code, 3) = b.alpha_3
+    WHERE t.calls_type = 'MTC CALLS'
 ) final_output
+
 ORDER BY 
     tariff_name,
     source_order,
+    -- For ROW block (source_order 3)
     CASE WHEN source_order = 3 THEN destination ELSE NULL END,
-    CASE WHEN source_order IN (1, 2) THEN calls_type ELSE NULL END;
+    -- For Local/Call-Back-Home (1 and 2)
+    CASE WHEN source_order IN (1, 2) THEN calls_type ELSE NULL END,
+    -- For MTC CALLS (4)
+    CASE WHEN source_order = 4 THEN destination ELSE NULL END;
 """
 
 @ratecard_bp.route('/download-ratecard', methods=['GET'])
