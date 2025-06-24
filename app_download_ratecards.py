@@ -45,15 +45,11 @@ def download_ratecard_page():
 
 @ratecard_bp.route('/download-ratecard/file', methods=['GET'])
 def download_ratecard_file():
-    """
-    Execute the SQL, dump the results to an in-memory Excel file,
-    and send it as an attachment.
-    """
     logger = current_app.logger
     try:
         logger.info("Running ratecard SQL…")
-        # Read into DataFrame
-        df = pd.read_sql_query(SQL, con=db.session.bind)
+        # <-- use db.engine instead of db.session.bind -->
+        df = pd.read_sql_query(SQL, con=db.engine)
         logger.debug(f"Fetched {len(df)} rows for ratecard")
 
         # Build Excel in memory
@@ -66,7 +62,7 @@ def download_ratecard_file():
         return send_file(
             output,
             as_attachment=True,
-            attachment_filename='ratecard_national.xlsx',
+            download_name='ratecard_national.xlsx',
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
     except Exception as e:
