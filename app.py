@@ -37,10 +37,11 @@ db = SQLAlchemy(app)
 # in app_upload_template.py, in your POST handler
 #return redirect(url_for('upload_template.upload_template'))
 
-# in app.py
+
 from app_upload_template import bp as upload_bp
-# give it a simple endpoint prefix 'upload'
-app.register_blueprint(upload_bp, url_prefix='', name='upload')
+# register with a URL prefix and a different name
+app.register_blueprint(upload_bp, url_prefix='', name='template')
+
 
 
 # Define the model based on your DDL.
