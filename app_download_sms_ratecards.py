@@ -7,12 +7,24 @@ from app import db
 sms_ratecard_bp = Blueprint('sms_ratecard', __name__, template_folder='templates')
 
 SQL_SMS = """
-select tadig_plmn_code as "Destination", 
-       tadig_plmn_code as "Area Code", 
-       mo_sms_rate_value as "Setup Rate",
-       start_date as "Valid From (dd-mmm-yyyy)",
-       0.0 AS "Rate"
-from ratesheet_v2;
+SELECT
+  tadig_plmn_code || '-NAT' AS "Destination",
+  tadig_plmn_code || '-NAT' AS "Area Code",
+  mo_sms_rate_value::numeric(12,8) AS "Setup Rate",
+  to_char(start_date, 'DD-Mon-YY') AS "Valid From (dd-mmm-yyyy)",
+  (0.0)::numeric(12,6) AS "Rate"
+FROM ratesheet_v2
+
+UNION ALL
+
+SELECT
+  tadig_plmn_code || '-INT' AS "Destination",
+  tadig_plmn_code || '-INT' AS "Area Code",
+  mo_sms_rate_value::numeric(12,8),
+  to_char(start_date, 'DD-Mon-YY'),
+  (0.0)::numeric(12,6)
+FROM ratesheet_v2
+ORDER BY "Destination";
 """
 
     
