@@ -50,6 +50,9 @@ from app_download_ratecards import ratecard_bp
 app.register_blueprint(ratecard_bp)
 
 
+from app_download_sms_ratecards import sms_ratecard_bp
+app.register_blueprint(sms_ratecard_bp)
+
 
 # Define the model based on your DDL.
 class RateSheetV2(db.Model):

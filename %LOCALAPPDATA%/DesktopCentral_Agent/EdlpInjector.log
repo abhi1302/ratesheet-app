@@ -1,0 +1,11 @@
+﻿Date	Time	Severity	PID	TID	Function	Message
+25-06-2025	12:56:05.099	 INFO	 61892	 54328	DllMain	"DLL_PROCESS_ATTACH "
+25-06-2025	12:56:05.102	 INFO	 61892	 58860	InitializeCurrentProcessInfo	"0|0|0"
+25-06-2025	12:56:05.116	ERROR	 61892	 58860	Edlp::Process::GetLabelId	"std::exception thrown GetFileVersionInfoSizeW failed with 1813"
+25-06-2025	12:56:05.118	 INFO	 61892	 58860	ProcessEdlpPolicy	"Label Id :NonWork (2)"
+25-06-2025	12:56:05.491	 INFO	 61892	 58860	LoadDlls	" Dlls : PrinterMonitorDll DragDropDll "
+25-06-2025	12:56:05.494	 INFO	 61892	 58860	Injector	"PolicyVersion : 1745846067"
+25-06-2025	15:45:26.806	ERROR	 61892	 58860	Edlp::Process::GetLabelId	"std::exception thrown GetFileVersionInfoSizeW failed with 1813"
+25-06-2025	15:45:27.024	 INFO	 61892	 58860	ProcessEdlpPolicy	"Label Id :NonWork (2)"
+25-06-2025	15:45:27.146	 INFO	 61892	 58860	LoadDlls	" Dlls : PrinterMonitorDll DragDropDll "
+25-06-2025	15:45:27.266	 INFO	 61892	 58860	Injector	"PolicyVersion : 1750846524"
