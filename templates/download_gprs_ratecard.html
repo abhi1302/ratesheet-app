@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Download GPRS Ratecard</title>
+</head>
+<body>
+  <h1>Download GPRS Ratecard</h1>
+  <form method="GET" action="{{ url_for('gprs_ratecard.download_gprs_ratecard_file') }}">
+    <button type="submit">Download GPRS ratecard</button>
+  </form>
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      <ul>
+        {% for cat, msg in msgs %}
+          <li style="color: {{ 'red' if cat=='error' else 'green' }}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+</body>
+</html>

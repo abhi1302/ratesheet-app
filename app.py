@@ -53,6 +53,13 @@ app.register_blueprint(ratecard_bp)
 from app_download_sms_ratecards import sms_ratecard_bp
 app.register_blueprint(sms_ratecard_bp)
 
+from app_download_gprs_ratecards import gprs_ratecard_bp
+app.register_blueprint(gprs_ratecard_bp)
+
+from app_download_volte_ratecards import volte_ratecard_bp
+app.register_blueprint(volte_ratecard_bp)
+
+
 
 # Define the model based on your DDL.
 class RateSheetV2(db.Model):
