@@ -52,7 +52,7 @@ def download_sms_ratecard_file():
 
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='SMS_Ratecard')
+            df.to_excel(writer, index=False)  # no sheet_name → defaults to "Sheet1"    
         output.seek(0)
         logger.info("SMS Excel generated, sending to client")
 

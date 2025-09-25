@@ -38,7 +38,8 @@ def download_gprs_ratecard_file():
 
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='GPRS_Ratecard')
+            df.to_excel(writer, index=False)  # no sheet_name → defaults to "Sheet1"
+    
         output.seek(0)
         logger.info("GPRS Excel generated, sending to client")
 
