@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Download SMS Ratecard</title>
+</head>
+<body>
+  <h1>Download SMS Ratecard</h1>
+  <form method="GET" action="{{ url_for('sms_ratecard.download_sms_ratecard_file') }}">
+    <button type="submit">Download SMS ratecard</button>
+  </form>
+
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% if msgs %}
+      <ul>
+        {% for cat, msg in msgs %}
+          <li style="color: {{ 'red' if cat=='error' else 'green' }}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+</body>
+</html>

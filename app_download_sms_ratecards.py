@@ -15,9 +15,11 @@ select tadig_plmn_code as "Destination",
 from ratesheet_v2;
 """
 
+    
 @sms_ratecard_bp.route('/download-sms-ratecard', methods=['GET'])
 def download_sms_ratecard_page():
-    return render_template('download_ratecard.html')
+    return render_template('download_sms_ratecard.html')
+    
 
 
 @sms_ratecard_bp.route('/download-sms-ratecard/file', methods=['GET'])
