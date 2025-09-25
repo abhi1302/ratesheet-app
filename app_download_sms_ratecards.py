@@ -8,23 +8,13 @@ sms_ratecard_bp = Blueprint('sms_ratecard', __name__, template_folder='templates
 
 SQL_SMS = """
 SELECT
-  tadig_plmn_code || '-NAT' AS "Destination",
-  tadig_plmn_code || '-NAT' AS "Area Code",
+  tadig_plmn_code || v.suffix AS "Destination",
+  tadig_plmn_code || v.suffix AS "Area Code",
   mo_sms_rate_value::numeric(12,8) AS "Setup Rate",
   start_date AS "Valid From",   -- keep as DATE, no to_char
-  (0.0)::numeric(12,6) AS "Rate"
+  (0.0)::numeric(12,6)                            AS "Rate"
 FROM ratesheet_v2
-
-UNION ALL
-
-SELECT
-  tadig_plmn_code || '-INT' AS "Destination",
-  tadig_plmn_code || '-INT' AS "Area Code",
-  mo_sms_rate_value::numeric(12,8),
-  start_date,                   -- keep as DATE
-  (0.0)::numeric(12,6)
-FROM ratesheet_v2
-ORDER BY "Destination";
+CROSS JOIN (VALUES ('-NAT'), ('-INT')) AS v(suffix);
 """
 
     
